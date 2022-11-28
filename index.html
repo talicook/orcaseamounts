@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Tali's cool map</title>
+
+    <link rel="stylesheet" href="leaflet.css" crossorigin=""/>
+    <script src="leaflet.js" crossorigin=""></script>
+    <script src="d3.v4.min.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		.leaflet-container {
+			height: 1000px;
+			max-width: 100%;
+			max-height: 100%;
+		}
+        .leaflet-dot { border-radius:50%; }
+        .leaflet-square { border-radius:0%; background: yellow }
+	</style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<script>
+
+    var Esri_OceanBasemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
+        maxZoom: 8
+    });
+    
+    const map = L.map('map', {
+		center: [-34, -155],
+		zoom: 7,
+		layers: [ Esri_OceanBasemap ]
+	});
+
+    var layerControl = L.control.layers({
+        "ESRI Ocean Basemap":Esri_OceanBasemap },
+        null,
+        {"collapsed":false} 
+    ).addTo(map);
+
+    layers = [
+        {"name": "All","color": "black","on":true},
+        {"name": "All_Grouped_Seamounts","color": "red"},
+        {"name": "Calderas","color": "green"},
+        {"name": "Conical","color": "khaki"},
+        {"name": "Elongated","color": "yellow"},
+        {"name": "Flank_Embayments","color": "purple"},
+        {"name": "Flat-ish_Seafloor","color": "orange"},
+        {"name": "Flattops","color": "gray"},
+        {"name": "Inverted_Caldera","color": "white"},
+        {"name": "Major_Ridge","color": "blue"},
+        {"name": "New_Minor_Ridge","color": "aqua"},
+        {"name": "Non_Uniform","color": "darkblue"},
+        {"name": "Rugged","color": "brown"},
+        {"name": "Seamounts_1000m","color": "darkmagenta"},
+        {"name": "Shelf_Ridge_Born","color": "darkolivegreen"},
+        {"name": "Shield","color": "darkorchid"},
+        {"name": "Tail","color": "chocolate"},
+        {"name": "Terraced_Grouped_Flattops","color": "deeppink"},
+        {"name": "Terraced_Non_Flattops","color": "fuchsia"},
+        {"name": "Terraced_Non_Group_Flattops","color": "gold"},
+        {"name": "Uniform","color": "lightcoral"},
+    ];
+
+    // dynamically create the color styles
+    var style = document.createElement('style');
+    style.type = 'text/css';
+    layers.forEach(function(layer){
+        style.innerHTML += '.leaflet-'+layer.color+'-dot { background: '+layer.color+';  } ';
+    });
+    document.getElementsByTagName('head')[0].appendChild(style);
+
+    // Go through each layer, and add to the control
+    layers.forEach(function(layer){
+        var dot_icon  = L.divIcon({className: 'leaflet-dot leaflet-'+layer.color+'-dot'});
+        var file = layer.name + ".csv"
+        var label = layer.name.replace(/_/g," ")
+
+        // go read the file
+        d3.csv("csvfiles/"+file,(d) => {
+            const vis_layer = L.layerGroup();
+
+            // for each point, add a marker
+            d.forEach(function(point){
+                var icon = dot_icon;
+                if ( point.heading > 0 ) {
+                    var style = document.createElement('style');
+                    style.type = 'text/css';
+                    //style.innerHTML = '.leaflet-square-'+point.heading +' { background: '+layer.color+'; rotate: '+point.heading+'deg;  } ';
+                    style.innerHTML = '.leaflet-square-'+point.heading +' { background: '+layer.color+'; transform: rotate('+point.heading+'deg); } ';
+                    document.getElementsByTagName('head')[0].appendChild(style);
+                    //icon = L.divIcon({html: '<img style="rotate: '+point.heading+'deg;" src="arrow.png">' });
+                    icon = L.divIcon({html: '<img style="rotate: '+point.heading+'deg;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAVlpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KTMInWQAAAdpJREFUOBGFVDtOA0EMnewGCS7ACeAYUIISEtpAxRGgRaLlFijiFkCAlgqJDokT0CAqJD7ZxLznsScT2GR35IzXnzdvbG9CWPZIKOhuS3u3lLKroWZbllbvyxIB9gB5TIGZL9kaFQltxoDdDsB8dTTPfI0YKUBCy3VA3SQ4Ke/cHrKYZFuoSFihD0AdBZtmv1L2NM9iFmIkR3YyYEYKJeUYO4XrPovVpqX3WmXGbs8ACDIx8Vrua24jy6x7APDa/UDnpSnUufJaLmFp3UNCzq5KcFJWBkjQvrHUafh/23p23wbgDAnktgaWM3bdjAVr52C+T9QSr+4d/8NyvrO3Buj1ciDfCeW+nGWa3YAh9bnrNbBzUDL35SwVowBYge9ibEU9sb1Se3wRbBMT6iTAzlaqhxBziKH2Gbt+OjN2kx3lMJOVL+q00Zd3PLHM2R3biV/KAV8edha7JUGeKNTNRh/ZfkL4xFy/KU7z2uW1oc4GHSJ1DbIK/QAyguTsfBLi/yXhEXAN8fWOD22Iv61t+uoe+LYQfQF5S1lSXmksDAMaCyleIGdgsjkHwhqz2FG0k8kvYQM5p5BnAx608HKOgNdpmF6iQh8aHOeS9atgi511lDofSlKE4ggh679ecGIXq+UAsgAAAABJRU5ErkJggg==">' });
+                    //icon = L.Icon({iconUrl: "arrow.png" });
+                    //console.log( icon);
+                }
+                const thispoint = L.marker([point.lat, point.lon],{icon:icon});
+                thispoint.addTo( vis_layer )
+            });
+
+            // add this layer to the control
+            layerControl.addOverlay(vis_layer, label);
+
+            if ( layer.on ) {
+                vis_layer.addTo( map )
+            }
+        })
+    });
+	
+</script>
+</body>
+</html>
