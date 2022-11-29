@@ -1,3 +1,3 @@
 # orcaseamounts
 
-https://ocrcaseamounts.pages.dev/
+https://orcaseamounts.pages.dev/
