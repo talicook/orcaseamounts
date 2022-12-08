@@ -36,15 +36,24 @@
         attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri',
         maxZoom: 8
     });
+    var Young_ORCA = L.tileLayer('/Young_ORCA_tiles/{z}/{x}/{y}.png', {
+        maxZoom: 8
+    });
+    var Young_ORCA_red = L.tileLayer('/Young_ORCA_red_tiles/{z}/{x}/{y}.png', {
+        maxZoom: 8
+    });
     
     const map = L.map('map', {
 		center: [-34, -155],
-		zoom: 7,
-		layers: [ Esri_OceanBasemap ]
+		zoom: 8,
+		layers: [ Esri_OceanBasemap, Young_ORCA, Young_ORCA_red ]
 	});
 
     var layerControl = L.control.layers({
-        "ESRI Ocean Basemap":Esri_OceanBasemap },
+        "Young ORCA": Young_ORCA,
+        "Young ORCA Red": Young_ORCA_red,
+        "ESRI Ocean Basemap":Esri_OceanBasemap,
+        },
         null,
         {"collapsed":false} 
     ).addTo(map);
